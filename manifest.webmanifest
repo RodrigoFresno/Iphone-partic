@@ -1,0 +1,12 @@
+{
+  "name": "Particle Flow",
+  "short_name": "Particle Flow",
+  "description": "Partículas fluidas e interativas.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#050611",
+  "theme_color": "#050611",
+  "icons": [{"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

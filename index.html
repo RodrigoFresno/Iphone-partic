@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#050611">
+<meta name="description" content="Partículas fluidas e interativas inspiradas na estética do Quick Start do iPhone.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>Particle Flow</title>
+<style>
+:root{color-scheme:dark;--bg:#050611;--panel:rgba(15,18,35,.72);--line:rgba(255,255,255,.12);--muted:#9ca5c5}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui,sans-serif;color:#fff;touch-action:none}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block}
+.vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 38%,rgba(2,3,12,.42) 100%)}
+header{position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;padding:22px 22px 0;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.brand{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(235,240,255,.58);font-weight:650}
+#toggle{pointer-events:auto;border:1px solid var(--line);background:rgba(255,255,255,.07);color:#fff;border-radius:99px;width:42px;height:42px;font-size:18px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.panel{position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0));max-width:520px;margin:auto;padding:15px 16px 14px;border:1px solid var(--line);border-radius:24px;background:var(--panel);backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%);box-shadow:0 18px 70px rgba(0,0,0,.28);transition:transform .35s ease,opacity .35s ease}
+.panel.hidden{transform:translateY(calc(100% + 25px));opacity:0;pointer-events:none}
+.panel-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.panel-title{font-size:13px;font-weight:650;letter-spacing:.02em}.hint{font-size:11px;color:var(--muted)}
+.colors{display:flex;gap:10px;align-items:center;margin-bottom:15px}
+.swatch{width:27px;height:27px;border-radius:50%;border:2px solid rgba(255,255,255,.25);padding:0;box-shadow:0 0 16px var(--glow);position:relative}
+.swatch[aria-pressed="true"]:after{content:"";position:absolute;inset:-5px;border:1px solid white;border-radius:50%}
+.swatch[data-palette="aurora"]{background:linear-gradient(135deg,#42f5dc,#4b75ff,#e45cff);--glow:#69aaff}
+.swatch[data-palette="ocean"]{background:linear-gradient(135deg,#38e8ff,#1769ff,#a8f7ff);--glow:#38bfff}
+.swatch[data-palette="sunset"]{background:linear-gradient(135deg,#ffe66d,#ff6b7d,#a84dff);--glow:#ff8a70}
+.swatch[data-palette="violet"]{background:linear-gradient(135deg,#e7a7ff,#875bff,#45d8ff);--glow:#bb83ff}
+.swatch[data-palette="mono"]{background:linear-gradient(135deg,#fff,#777,#ddd);--glow:#fff}
+.custom{width:29px;height:29px;border:0;background:transparent;padding:0;border-radius:50%;overflow:hidden}
+.custom::-webkit-color-swatch-wrapper{padding:0}.custom::-webkit-color-swatch{border:2px solid rgba(255,255,255,.4);border-radius:50%}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px}
+.control label{display:flex;justify-content:space-between;font-size:11px;color:#c6cce0;margin-bottom:7px}
+input[type=range]{width:100%;accent-color:#a8b8ff;height:3px}
+.actions{display:flex;gap:8px;margin-top:14px}
+.action{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.07);color:white;border-radius:13px;padding:10px 8px;font-size:11px;font-weight:600}
+.action.primary{background:rgba(147,167,255,.19);border-color:rgba(175,190,255,.28)}
+footer{position:fixed;bottom:calc(205px + env(safe-area-inset-bottom,0));left:0;right:0;text-align:center;pointer-events:none;font-size:10px;letter-spacing:.08em;color:rgba(225,231,255,.38);transition:opacity .3s}
+.panel.hidden~footer{opacity:0}
+@media(min-width:700px){.panel{bottom:28px;left:auto;right:28px;width:360px}.hint{font-size:12px}footer{bottom:30px;left:28px;right:auto;text-align:left}}
+@media(max-height:650px){.panel{padding:11px 14px}.colors{margin-bottom:10px}.controls{gap:8px 14px}.actions{margin-top:10px}.panel-top{margin-bottom:9px}footer{display:none}}
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas><div class="vignette"></div>
+<header><div class="brand">Particle Flow · Interactive</div><button id="toggle" aria-label="Mostrar ou ocultar controles">⌄</button></header>
+<section class="panel" id="panel">
+ <div class="panel-top"><div class="panel-title">Personalizar experiência</div><div class="hint">Toque e arraste para criar movimento</div></div>
+ <div class="colors" aria-label="Paletas de cores">
+  <button class="swatch" data-palette="aurora" aria-label="Aurora" aria-pressed="true"></button>
+  <button class="swatch" data-palette="ocean" aria-label="Oceano" aria-pressed="false"></button>
+  <button class="swatch" data-palette="sunset" aria-label="Pôr do sol" aria-pressed="false"></button>
+  <button class="swatch" data-palette="violet" aria-label="Violeta" aria-pressed="false"></button>
+  <button class="swatch" data-palette="mono" aria-label="Monocromático" aria-pressed="false"></button>
+  <input class="custom" id="customColor" type="color" value="#72dfff" aria-label="Escolher cor personalizada">
+ </div>
+ <div class="controls">
+  <div class="control"><label for="density">Quantidade <span id="densityVal">1.0×</span></label><input id="density" type="range" min=".45" max="1.8" step=".05" value="1"></div>
+  <div class="control"><label for="speed">Velocidade <span id="speedVal">1.0×</span></label><input id="speed" type="range" min=".3" max="2.2" step=".1" value="1"></div>
+  <div class="control"><label for="glow">Brilho <span id="glowVal">70%</span></label><input id="glow" type="range" min="20" max="100" step="5" value="70"></div>
+  <div class="control"><label for="flow">Força do toque <span id="flowVal">1.0×</span></label><input id="flow" type="range" min=".3" max="2.5" step=".1" value="1"></div>
+ </div>
+ <div class="actions"><button class="action" id="clear">Limpar rastros</button><button class="action primary" id="fullscreen">Tela cheia</button></div>
+</section>
+<footer>MOVE YOUR FINGER · SHAPE THE FLOW</footer>
+<script>
+(()=>{
+'use strict';
+const canvas=document.getElementById('stage'),ctx=canvas.getContext('2d',{alpha:false});
+const palettes={
+ aurora:['#45f2d5','#4c8dff','#d96cff','#8ef7ff'],
+ ocean:['#38e8ff','#1769ff','#a8f7ff','#42b7d5'],
+ sunset:['#ffe66d','#ff6b7d','#a84dff','#ffad68'],
+ violet:['#e7a7ff','#875bff','#45d8ff','#c4a0ff'],
+ mono:['#ffffff','#aab5d4','#e3e8ff','#77809d']
+};
+let palette='aurora',customColor=null,particles=[],w=0,h=0,dpr=1,last=0, pointer={x:-9999,y:-9999,px:-9999,py:-9999,down:false,vx:0,vy:0};
+let settings={density:1,speed:1,glow:.7,force:1};
+const rand=(a,b)=>a+Math.random()*(b-a);
+const hexRgb=h=>{const n=parseInt(h.slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255]};
+function resize(){dpr=Math.min(devicePixelRatio||1,1.65);w=innerWidth;h=innerHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.setTransform(dpr,0,0,dpr,0,0);seed();}
+function color(i){return customColor?[...hexRgb(customColor)]:hexRgb(palettes[palette][i%palettes[palette].length]);}
+function seed(){const count=Math.min(1450,Math.floor((w*h/1050)*settings.density));particles=[];for(let i=0;i<count;i++){const c=color(i);particles.push({x:rand(0,w),y:rand(0,h),vx:rand(-.25,.25),vy:rand(-.25,.25),r:rand(.55,1.65),a:rand(.24,.8),phase:rand(0,Math.PI*2),c});}}
+function setPalette(p){palette=p;customColor=null;document.querySelectorAll('.swatch').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.palette===p)));seed();}
+document.querySelectorAll('.swatch').forEach(b=>b.addEventListener('click',()=>setPalette(b.dataset.palette)));
+document.getElementById('customColor').addEventListener('input',e=>{customColor=e.target.value;document.querySelectorAll('.swatch').forEach(b=>b.setAttribute('aria-pressed','false'));seed();});
+function pos(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
+canvas.addEventListener('pointerdown',e=>{const p=pos(e);pointer.down=true;pointer.x=pointer.px=p.x;pointer.y=pointer.py=p.y;canvas.setPointerCapture?.(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{const p=pos(e);pointer.px=pointer.x;pointer.py=pointer.y;pointer.x=p.x;pointer.y=p.y;pointer.vx=p.x-pointer.px;pointer.vy=p.y-pointer.py;});
+function up(){pointer.down=false;pointer.x=pointer.y=-9999;}canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);canvas.addEventListener('pointerleave',e=>{if(!pointer.down)up();});
+function frame(t){const dt=Math.min((t-last)/16.67||1,2);last=t;
+ ctx.globalCompositeOperation='source-over';ctx.fillStyle='rgba(5,6,17,.19)';ctx.fillRect(0,0,w,h);
+ ctx.globalCompositeOperation='lighter';
+ const speed=settings.speed,force=settings.force;
+ for(let i=0;i<particles.length;i++){
+  const p=particles[i],time=t*.00018;
+  const dx=p.x-pointer.x,dy=p.y-pointer.y,dist2=dx*dx+dy*dy;
+  const n1=Math.sin(p.y*.006+time+p.phase),n2=Math.cos(p.x*.006-time*.8+p.phase);
+  p.vx+=(n1*.018+n2*.009)*dt;p.vy+=(n2*.018-n1*.009)*dt;
+  if(dist2<19000){const d=Math.sqrt(dist2)+.01,k=(1-d/138)*.11*force;p.vx+=(-dy/d)*k*pointer.vx*.12;p.vy+=(dx/d)*k*pointer.vx*.12;p.vx+=pointer.vx*k*.025;p.vy+=pointer.vy*k*.025;}
+  if(pointer.down&&dist2<26000){const d=Math.sqrt(dist2)+.01,k=(1-d/162)*.22*force;p.vx+=pointer.vx*k*.055-dx/d*k*.12;p.vy+=pointer.vy*k*.055-dy/d*k*.12;}
+  p.vx*=.986;p.vy*=.986;p.x+=p.vx*speed*dt;p.y+=p.vy*speed*dt;
+  if(p.x<-8)p.x=w+8;if(p.x>w+8)p.x=-8;if(p.y<-8)p.y=h+8;if(p.y>h+8)p.y=-8;
+  const pulse=.72+.28*Math.sin(t*.0012+p.phase),alpha=p.a*pulse*settings.glow;
+  ctx.beginPath();ctx.fillStyle=`rgba(${p.c[0]},${p.c[1]},${p.c[2]},${alpha})`;ctx.shadowColor=`rgba(${p.c[0]},${p.c[1]},${p.c[2]},${.8*settings.glow})`;ctx.shadowBlur=5+8*settings.glow;ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+ }
+ ctx.shadowBlur=0;
+ // Soft luminous filaments connect nearby particles into a delicate, moving field.
+ for(let i=0;i<particles.length;i+=3){const a=particles[i];for(let j=i+1;j<Math.min(i+9,particles.length);j+=3){const b=particles[j],dx=a.x-b.x,dy=a.y-b.y,d=dx*dx+dy*dy;if(d<950){ctx.strokeStyle=`rgba(${a.c[0]},${a.c[1]},${a.c[2]},${(1-d/950)*.055*settings.glow})`;ctx.lineWidth=.55;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}}
+ requestAnimationFrame(frame);
+}
+function update(id,key,scale=1,suffix='×'){const el=document.getElementById(id),out=document.getElementById(id+'Val');el.addEventListener('input',()=>{settings[key]=Number(el.value)*scale;out.textContent=key==='glow'?Math.round(Number(el.value))+'%':Number(el.value).toFixed(1)+suffix;if(key==='density')seed();});}
+update('density','density');update('speed','speed');update('glow','glow',.01,'%');update('flow','force');
+document.getElementById('clear').onclick=()=>{ctx.fillStyle='#050611';ctx.fillRect(0,0,w,h);};
+document.getElementById('fullscreen').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen?.();else await document.exitFullscreen?.();}catch{}};
+const panel=document.getElementById('panel'),toggle=document.getElementById('toggle');toggle.onclick=()=>{panel.classList.toggle('hidden');toggle.textContent=panel.classList.contains('hidden')?'⌃':'⌄';};
+window.addEventListener('resize',resize,{passive:true});resize();requestAnimationFrame(frame);
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+})();
+</script>
+</body></html>
